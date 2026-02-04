@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="En Fouple">
+    <title>En Fouple - Application privée</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💜</text></svg>">
+    <style>
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        
+        // Icônes SVG
+        const Heart = ({ className, fill, strokeWidth = 2 }) => (
+            <svg className={className} fill={fill || "none"} stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+        );
+
+        const Lock = ({ className, strokeWidth = 2 }) => (
+            <svg className={className} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+        );
+
+        const Send = ({ className, strokeWidth = 2 }) => (
+            <svg className={className} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            </svg>
+        );
+
+        const Bell = ({ className, strokeWidth = 2 }) => (
+            <svg className={className} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+        );
+
+        const ChevronRight = ({ className, strokeWidth = 2 }) => (
+            <svg className={className} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+        );
+
+        const Plus = ({ className, strokeWidth = 2 }) => (
+            <svg className={className} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+        );
+
+        const X = ({ className, strokeWidth = 2 }) => (
+            <svg className={className} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        );
+
+        const Circle = ({ className, strokeWidth = 2 }) => (
+            <svg className={className} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" />
+            </svg>
+        );
+
+        const Edit = ({ className, strokeWidth = 2 }) => (
+            <svg className={className} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+        );
+
+        const Trash = ({ className, strokeWidth = 2 }) => (
+            <svg className={className} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+        );
+
+        const Reply = ({ className, strokeWidth = 2 }) => (
+            <svg className={className} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+            </svg>
+        );
+
+        const NotreEspace = () => {
+            const [isAuthenticated, setIsAuthenticated] = useState(false);
+            const [password, setPassword] = useState('');
+            const [messages, setMessages] = useState([]);
+            const [selectedCategory, setSelectedCategory] = useState(null);
+            const [newMessage, setNewMessage] = useState('');
+            const [showComposer, setShowComposer] = useState(false);
+            const [notifications, setNotifications] = useState([]);
+            const [editingMessageId, setEditingMessageId] = useState(null);
+            const [editingText, setEditingText] = useState('');
+            const [replyingTo, setReplyingTo] = useState(null);
+            const [replyText, setReplyText] = useState('');
+            const [readMessages, setReadMessages] = useState([]);
+
+            const categories = [
+                { 
+                    id: 'memorables', 
+                    name: 'Mémorables', 
+                    emoji: '✦', 
+                    color: '#8B3A62', 
+                    gradient: 'from-purple-900 to-pink-900',
+                    bgGradient: 'from-purple-950/20 to-pink-950/20',
+                    shadow: 'shadow-purple-900/20'
+                },
+                { 
+                    id: 'questions', 
+                    name: 'Questions intimes', 
+                    emoji: '◆', 
+                    color: '#6B2D5C', 
+                    gradient: 'from-violet-900 to-purple-900',
+                    bgGradient: 'from-violet-950/20 to-purple-950/20',
+                    shadow: 'shadow-violet-900/20'
+                },
+                { 
+                    id: 'chemin', 
+                    name: 'Notre chemin', 
+                    emoji: '●', 
+                    color: '#1E3A5F', 
+                    gradient: 'from-blue-950 to-indigo-900',
+                    bgGradient: 'from-blue-950/20 to-indigo-950/20',
+                    shadow: 'shadow-blue-900/20'
+                },
+                { 
+                    id: 'projets', 
+                    name: 'Projets & Envies', 
+                    emoji: '★', 
+                    color: '#7C2D12', 
+                    gradient: 'from-red-950 to-orange-900',
+                    bgGradient: 'from-red-950/20 to-orange-950/20',
+                    shadow: 'shadow-red-900/20'
+                },
+                { 
+                    id: 'scenarios', 
+                    name: 'Nos scénarios', 
+                    emoji: '◇', 
+                    color: '#115E59', 
+                    gradient: 'from-teal-950 to-emerald-900',
+                    bgGradient: 'from-teal-950/20 to-emerald-950/20',
+                    shadow: 'shadow-teal-900/20'
+                },
+                { 
+                    id: 'culture', 
+                    name: 'Culture à deux', 
+                    emoji: '◈', 
+                    color: '#92400E', 
+                    gradient: 'from-amber-950 to-yellow-900',
+                    bgGradient: 'from-amber-950/20 to-yellow-950/20',
+                    shadow: 'shadow-amber-900/20'
+                }
+            ];
+
+            useEffect(() => {
+                loadData();
+            }, [isAuthenticated]);
+
+            const loadData = () => {
+                if (!isAuthenticated) return;
+                
+                try {
+                    const storedData = localStorage.getItem('enfouple-data');
+                    if (storedData) {
+                        const data = JSON.parse(storedData);
+                        setMessages(data.messages || []);
+                    }
+                    
+                    const storedReadMessages = localStorage.getItem('read-messages');
+                    if (storedReadMessages) {
+                        setReadMessages(JSON.parse(storedReadMessages));
+                    }
+                    
+                    // Calculer les notifications
+                    updateNotifications();
+                } catch (error) {
+                    console.log('Première utilisation');
+                }
+            };
+
+            const updateNotifications = () => {
+                try {
+                    const storedData = localStorage.getItem('enfouple-data');
+                    const storedReadMessages = localStorage.getItem('read-messages');
+                    
+                    if (storedData) {
+                        const data = JSON.parse(storedData);
+                        const readIds = storedReadMessages ? JSON.parse(storedReadMessages) : [];
+                        
+                        const unreadMessages = (data.messages || []).filter(m => !readIds.includes(m.id));
+                        setNotifications(unreadMessages);
+                    }
+                } catch (error) {
+                    console.log('Erreur mise à jour notifications');
+                }
+            };
+
+            const saveData = (updatedMessages) => {
+                const data = { messages: updatedMessages };
+                localStorage.setItem('enfouple-data', JSON.stringify(data));
+                updateNotifications();
+            };
+
+            const markCategoryAsRead = (categoryId) => {
+                const categoryMessages = messages.filter(m => m.category === categoryId);
+                const categoryIds = categoryMessages.map(m => m.id);
+                const allReplies = categoryMessages.flatMap(m => (m.replies || []).map(r => r.id));
+                
+                const newReadMessages = [...new Set([...readMessages, ...categoryIds, ...allReplies])];
+                setReadMessages(newReadMessages);
+                localStorage.setItem('read-messages', JSON.stringify(newReadMessages));
+                updateNotifications();
+            };
+
+            const handleLogin = () => {
+                if (password.length >= 6) {
+                    setIsAuthenticated(true);
+                } else {
+                    alert('Le mot de passe doit contenir au moins 6 caractères');
+                }
+            };
+
+            const handleSendMessage = () => {
+                if (!newMessage.trim() || !selectedCategory) return;
+
+                const message = {
+                    id: Date.now(),
+                    category: selectedCategory,
+                    text: newMessage,
+                    timestamp: Date.now(),
+                    replies: []
+                };
+
+                const updatedMessages = [...messages, message];
+                setMessages(updatedMessages);
+                saveData(updatedMessages);
+                
+                setNewMessage('');
+                setShowComposer(false);
+                setSelectedCategory(null);
+            };
+
+            const handleEditMessage = (messageId, newText) => {
+                const updatedMessages = messages.map(msg => 
+                    msg.id === messageId ? { ...msg, text: newText, edited: true } : msg
+                );
+                setMessages(updatedMessages);
+                saveData(updatedMessages);
+                setEditingMessageId(null);
+                setEditingText('');
+            };
+
+            const handleDeleteMessage = (messageId) => {
+                if (confirm('Êtes-vous sûr de vouloir supprimer ce message ?')) {
+                    const updatedMessages = messages.filter(msg => msg.id !== messageId);
+                    setMessages(updatedMessages);
+                    saveData(updatedMessages);
+                }
+            };
+
+            const handleReply = (messageId) => {
+                if (!replyText.trim()) return;
+
+                const reply = {
+                    id: Date.now(),
+                    text: replyText,
+                    timestamp: Date.now()
+                };
+
+                const updatedMessages = messages.map(msg => {
+                    if (msg.id === messageId) {
+                        return {
+                            ...msg,
+                            replies: [...(msg.replies || []), reply]
+                        };
+                    }
+                    return msg;
+                });
+
+                setMessages(updatedMessages);
+                saveData(updatedMessages);
+                setReplyingTo(null);
+                setReplyText('');
+            };
+
+            const handleDeleteReply = (messageId, replyId) => {
+                if (confirm('Êtes-vous sûr de vouloir supprimer cette réponse ?')) {
+                    const updatedMessages = messages.map(msg => {
+                        if (msg.id === messageId) {
+                            return {
+                                ...msg,
+                                replies: (msg.replies || []).filter(r => r.id !== replyId)
+                            };
+                        }
+                        return msg;
+                    });
+                    setMessages(updatedMessages);
+                    saveData(updatedMessages);
+                }
+            };
+
+            const clearNotifications = () => {
+                const allMessageIds = messages.flatMap(m => [
+                    m.id,
+                    ...(m.replies || []).map(r => r.id)
+                ]);
+                setReadMessages(allMessageIds);
+                localStorage.setItem('read-messages', JSON.stringify(allMessageIds));
+                setNotifications([]);
+            };
+
+            const getCategoryMessages = (categoryId) => {
+                return messages.filter(m => m.category === categoryId).sort((a, b) => b.timestamp - a.timestamp);
+            };
+
+            const getUnreadCountForCategory = (categoryId) => {
+                const categoryMessages = getCategoryMessages(categoryId);
+                const unreadCount = categoryMessages.filter(m => !readMessages.includes(m.id)).length;
+                const unreadReplies = categoryMessages.reduce((count, msg) => {
+                    return count + (msg.replies || []).filter(r => !readMessages.includes(r.id)).length;
+                }, 0);
+                return unreadCount + unreadReplies;
+            };
+
+            const formatDate = (timestamp) => {
+                const date = new Date(timestamp);
+                const now = new Date();
+                const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+                
+                if (diffDays === 0) return "Aujourd'hui";
+                if (diffDays === 1) return "Hier";
+                if (diffDays < 7) return `Il y a ${diffDays} jours`;
+                return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+            };
+
+            if (!isAuthenticated) {
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
+                        <style>{`
+                            @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Work+Sans:wght@300;400;500;600&display=swap');
+                            
+                            body {
+                                font-family: 'Work Sans', sans-serif;
+                            }
+                            
+                            .cormorant {
+                                font-family: 'Cormorant Garamond', serif;
+                            }
+                            
+                            @keyframes float {
+                                0%, 100% { transform: translateY(0px) rotate(0deg); }
+                                50% { transform: translateY(-30px) rotate(5deg); }
+                            }
+                            
+                            @keyframes glow {
+                                0%, 100% { opacity: 0.3; }
+                                50% { opacity: 0.6; }
+                            }
+                            
+                            @keyframes fadeIn {
+                                from { opacity: 0; transform: translateY(30px); }
+                                to { opacity: 1; transform: translateY(0); }
+                            }
+                            
+                            .float-animation {
+                                animation: float 8s ease-in-out infinite;
+                            }
+                            
+                            .glow-orb {
+                                animation: glow 4s ease-in-out infinite;
+                            }
+                            
+                            .fade-in {
+                                animation: fadeIn 0.8s ease-out forwards;
+                            }
+                            
+                            .grain {
+                                background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+                            }
+                        `}</style>
+                        
+                        <div className="absolute inset-0 overflow-hidden">
+                            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl glow-orb"></div>
+                            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-pink-600/20 rounded-full blur-3xl glow-orb" style={{animationDelay: '2s'}}></div>
+                            <div className="absolute top-1/2 right-1/3 w-64 h-64 bg-blue-600/20 rounded-full blur-3xl glow-orb" style={{animationDelay: '1s'}}></div>
+                        </div>
+                        
+                        <div className="grain absolute inset-0"></div>
+                        
+                        <div className="max-w-md w-full relative z-10 fade-in">
+                            <div className="text-center mb-10">
+                                <div className="inline-block mb-6 float-animation">
+                                    <div className="relative">
+                                        <Heart className="w-20 h-20 text-purple-300" strokeWidth={1.5} />
+                                        <div className="absolute inset-0 bg-purple-500/20 blur-xl rounded-full"></div>
+                                    </div>
+                                </div>
+                                <h1 className="text-6xl font-light text-white cormorant mb-3 tracking-wide">
+                                    En Fouple
+                                </h1>
+                                <p className="text-slate-400 text-lg font-light tracking-wide">Un sanctuaire pour nous deux</p>
+                            </div>
+
+                            <div className="bg-slate-900/50 backdrop-blur-xl rounded-2xl shadow-2xl p-8 border border-slate-800">
+                                <div className="mb-6">
+                                    <label className="flex items-center text-slate-300 mb-3 font-light tracking-wide">
+                                        <Lock className="w-5 h-5 mr-2 text-purple-400" strokeWidth={1.5} />
+                                        Mot de passe partagé
+                                    </label>
+                                    <input
+                                        type="password"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+                                        className="w-full px-4 py-3 bg-slate-950/50 border border-slate-800 rounded-lg focus:outline-none focus:border-purple-600 transition-colors text-white placeholder-slate-600"
+                                        placeholder="••••••••"
+                                    />
+                                </div>
+                                
+                                <button
+                                    onClick={handleLogin}
+                                    className="w-full bg-gradient-to-r from-purple-900 to-purple-700 text-white py-3 rounded-lg font-medium hover:from-purple-800 hover:to-purple-600 transition-all shadow-lg shadow-purple-900/30"
+                                >
+                                    Accéder à l'espace
+                                </button>
+                                
+                                <p className="text-sm text-slate-500 mt-6 text-center font-light flex items-center justify-center gap-2">
+                                    <Lock className="w-3 h-3" strokeWidth={1.5} />
+                                    Totalement privé et sécurisé
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative">
+                    <style>{`
+                        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Work+Sans:wght@300;400;500;600&display=swap');
+                        
+                        body {
+                            font-family: 'Work Sans', sans-serif;
+                            background: #0f172a;
+                        }
+                        
+                        .cormorant {
+                            font-family: 'Cormorant Garamond', serif;
+                        }
+                        
+                        @keyframes slideIn {
+                            from {
+                                opacity: 0;
+                                transform: translateY(20px);
+                            }
+                            to {
+                                opacity: 1;
+                                transform: translateY(0);
+                            }
+                        }
+                        
+                        .slide-in {
+                            animation: slideIn 0.5s ease-out forwards;
+                        }
+                        
+                        @keyframes fadeIn {
+                            from { opacity: 0; }
+                            to { opacity: 1; }
+                        }
+                        
+                        .fade-in {
+                            animation: fadeIn 0.3s ease-out;
+                        }
+                        
+                        .grain {
+                            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+                        }
+                        
+                        .message-actions {
+                            opacity: 0;
+                            transition: opacity 0.2s;
+                        }
+                        
+                        .message-container:hover .message-actions {
+                            opacity: 1;
+                        }
+                    `}</style>
+
+                    <div className="grain absolute inset-0 pointer-events-none"></div>
+
+                    <div className="bg-slate-900/80 backdrop-blur-xl shadow-lg border-b border-slate-800 sticky top-0 z-10">
+                        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <Heart className="w-7 h-7 text-purple-400" strokeWidth={1.5} />
+                                <h1 className="text-2xl font-light text-white cormorant tracking-wide">
+                                    En Fouple
+                                </h1>
+                            </div>
+                            
+                            <div className="flex items-center gap-4">
+                                {notifications.length > 0 && (
+                                    <button onClick={clearNotifications} className="relative">
+                                        <Bell className="w-6 h-6 text-purple-400" strokeWidth={1.5} />
+                                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
+                                            {notifications.length}
+                                        </span>
+                                    </button>
+                                )}
+                                
+                                <button
+                                    onClick={() => setShowComposer(true)}
+                                    className="bg-gradient-to-r from-purple-900 to-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:from-purple-800 hover:to-purple-600 transition-all shadow-lg shadow-purple-900/30"
+                                >
+                                    <Plus className="w-5 h-5" strokeWidth={1.5} />
+                                    <span className="font-light">Nouveau</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {notifications.length > 0 && (
+                        <div className="max-w-6xl mx-auto px-4 py-4">
+                            <div className="bg-gradient-to-r from-purple-900/80 to-purple-800/80 backdrop-blur-sm text-white p-4 rounded-xl shadow-lg fade-in border border-purple-700/30">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <Bell className="w-5 h-5" strokeWidth={1.5} />
+                                        <span className="font-light">
+                                            {notifications.length} nouveau{notifications.length > 1 ? 'x' : ''} message{notifications.length > 1 ? 's' : ''}
+                                        </span>
+                                    </div>
+                                    <button onClick={clearNotifications} className="text-white/70 hover:text-white transition-colors">
+                                        <X className="w-5 h-5" strokeWidth={1.5} />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="max-w-6xl mx-auto px-4 py-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {categories.map((category, index) => {
+                                const categoryMessages = getCategoryMessages(category.id);
+                                const unreadCount = getUnreadCountForCategory(category.id);
+                                
+                                return (
+                                    <div
+                                        key={category.id}
+                                        className={`slide-in bg-gradient-to-br ${category.bgGradient} backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-slate-800 hover:border-slate-700 transition-all transform hover:-translate-y-1 cursor-pointer relative overflow-hidden group`}
+                                        style={{ animationDelay: `${index * 0.1}s` }}
+                                        onClick={() => {
+                                            setSelectedCategory(category.id);
+                                            setShowComposer(false);
+                                            markCategoryAsRead(category.id);
+                                        }}
+                                    >
+                                        <div className={`absolute inset-0 bg-gradient-to-br ${category.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}></div>
+                                        
+                                        <div className="relative z-10">
+                                            <div className="flex items-start justify-between mb-4">
+                                                <div className="flex items-center gap-4">
+                                                    <div className={`text-3xl w-14 h-14 flex items-center justify-center bg-gradient-to-br ${category.gradient} rounded-xl ${category.shadow} shadow-xl`}>
+                                                        <span className="text-white/90">{category.emoji}</span>
+                                                    </div>
+                                                    <div>
+                                                        <h2 className="text-xl font-light text-white cormorant tracking-wide">
+                                                            {category.name}
+                                                        </h2>
+                                                        <p className="text-sm text-slate-400 font-light">
+                                                            {categoryMessages.length} message{categoryMessages.length > 1 ? 's' : ''}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                
+                                                {unreadCount > 0 && (
+                                                    <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
+                                                        {unreadCount}
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            {categoryMessages.length > 0 && (
+                                                <div className="bg-slate-900/50 backdrop-blur-sm rounded-xl p-4 mt-4 border border-slate-800/50">
+                                                    <p className="text-slate-300 line-clamp-2 mb-2 font-light">
+                                                        {categoryMessages[0].text}
+                                                    </p>
+                                                    <p className="text-xs text-slate-500 font-light">
+                                                        {formatDate(categoryMessages[0].timestamp)}
+                                                    </p>
+                                                </div>
+                                            )}
+
+                                            <div className="flex items-center justify-end mt-4 text-slate-400 group-hover:text-slate-300 transition-colors">
+                                                <span className="text-sm font-light">Voir tout</span>
+                                                <ChevronRight className="w-4 h-4 ml-1" strokeWidth={1.5} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {showComposer && (
+                        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 z-50 fade-in">
+                            <div className="bg-slate-900 rounded-2xl shadow-2xl max-w-2xl w-full p-8 slide-in border border-slate-800 max-h-[90vh] overflow-y-auto">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h2 className="text-2xl font-light text-white cormorant tracking-wide">Nouveau message</h2>
+                                    <button
+                                        onClick={() => {
+                                            setShowComposer(false);
+                                            setNewMessage('');
+                                            setSelectedCategory(null);
+                                        }}
+                                        className="text-slate-400 hover:text-slate-200 transition-colors"
+                                    >
+                                        <X className="w-6 h-6" strokeWidth={1.5} />
+                                    </button>
+                                </div>
+
+                                <div className="mb-6">
+                                    <label className="block text-slate-300 font-light mb-3 tracking-wide">Choisir une rubrique</label>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {categories.map(cat => (
+                                            <button
+                                                key={cat.id}
+                                                onClick={() => setSelectedCategory(cat.id)}
+                                                className={`p-4 rounded-xl border transition-all ${
+                                                    selectedCategory === cat.id
+                                                        ? `border-transparent bg-gradient-to-br ${cat.gradient} text-white shadow-lg ${cat.shadow}`
+                                                        : 'border-slate-800 hover:border-slate-700 bg-slate-950/50'
+                                                }`}
+                                            >
+                                                <div className="text-2xl mb-2">{cat.emoji}</div>
+                                                <div className={`text-sm font-light ${selectedCategory === cat.id ? 'text-white' : 'text-slate-300'}`}>
+                                                    {cat.name}
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="mb-6">
+                                    <label className="block text-slate-300 font-light mb-3 tracking-wide">Votre message</label>
+                                    <textarea
+                                        value={newMessage}
+                                        onChange={(e) => setNewMessage(e.target.value)}
+                                        className="w-full h-40 px-4 py-3 bg-slate-950/50 border border-slate-800 rounded-xl focus:outline-none focus:border-purple-600 resize-none text-white placeholder-slate-600 font-light"
+                                        placeholder="Écrivez votre message..."
+                                    />
+                                </div>
+
+                                <button
+                                    onClick={handleSendMessage}
+                                    disabled={!selectedCategory || !newMessage.trim()}
+                                    className="w-full bg-gradient-to-r from-purple-900 to-purple-700 text-white py-3 rounded-xl font-light hover:from-purple-800 hover:to-purple-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-purple-900/30"
+                                >
+                                    <Send className="w-5 h-5" strokeWidth={1.5} />
+                                    Envoyer le message
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {selectedCategory && !showComposer && (
+                        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 z-50 fade-in">
+                            <div className="bg-slate-900 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden slide-in border border-slate-800">
+                                {(() => {
+                                    const category = categories.find(c => c.id === selectedCategory);
+                                    const categoryMessages = getCategoryMessages(selectedCategory);
+                                    
+                                    return (
+                                        <>
+                                            <div className={`bg-gradient-to-r ${category.gradient} p-6 text-white relative overflow-hidden`}>
+                                                <div className="absolute inset-0 opacity-10">
+                                                    <div className="absolute inset-0" style={{
+                                                        backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
+                                                        backgroundSize: '40px 40px'
+                                                    }}></div>
+                                                </div>
+                                                <div className="flex items-center justify-between relative z-10">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="text-4xl w-16 h-16 flex items-center justify-center bg-white/10 backdrop-blur-sm rounded-xl">
+                                                            {category.emoji}
+                                                        </div>
+                                                        <div>
+                                                            <h2 className="text-3xl font-light cormorant tracking-wide">{category.name}</h2>
+                                                            <p className="text-white/70 font-light">{categoryMessages.length} message{categoryMessages.length > 1 ? 's' : ''}</p>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => setSelectedCategory(null)}
+                                                        className="text-white/70 hover:text-white transition-colors"
+                                                    >
+                                                        <X className="w-6 h-6" strokeWidth={1.5} />
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div className="overflow-y-auto p-6 bg-slate-950" style={{ maxHeight: 'calc(90vh - 120px)' }}>
+                                                {categoryMessages.length === 0 ? (
+                                                    <div className="text-center py-12 text-slate-500">
+                                                        <Circle className="w-12 h-12 mx-auto mb-4 opacity-30" strokeWidth={1} />
+                                                        <p className="text-lg font-light">Aucun message pour le moment</p>
+                                                        <p className="text-sm mt-2 font-light">Soyez le premier à partager quelque chose</p>
+                                                    </div>
+                                                ) : (
+                                                    <div className="space-y-6">
+                                                        {categoryMessages.map((msg, idx) => {
+                                                            const isUnread = !readMessages.includes(msg.id);
+                                                            
+                                                            return (
+                                                                <div key={msg.id} className="space-y-3">
+                                                                    <div
+                                                                        className={`message-container bg-gradient-to-br ${category.bgGradient} backdrop-blur-sm rounded-xl p-5 border ${isUnread ? 'border-purple-500' : 'border-slate-800'} slide-in ${category.shadow}`}
+                                                                        style={{ animationDelay: `${idx * 0.05}s` }}
+                                                                    >
+                                                                        {editingMessageId === msg.id ? (
+                                                                            <div className="space-y-3">
+                                                                                <textarea
+                                                                                    value={editingText}
+                                                                                    onChange={(e) => setEditingText(e.target.value)}
+                                                                                    className="w-full h-32 px-4 py-3 bg-slate-950/50 border border-slate-800 rounded-xl focus:outline-none focus:border-purple-600 resize-none text-white font-light"
+                                                                                />
+                                                                                <div className="flex gap-2">
+                                                                                    <button
+                                                                                        onClick={() => handleEditMessage(msg.id, editingText)}
+                                                                                        className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-light hover:bg-purple-700 transition-colors"
+                                                                                    >
+                                                                                        Enregistrer
+                                                                                    </button>
+                                                                                    <button
+                                                                                        onClick={() => {
+                                                                                            setEditingMessageId(null);
+                                                                                            setEditingText('');
+                                                                                        }}
+                                                                                        className="px-4 py-2 bg-slate-700 text-white rounded-lg text-sm font-light hover:bg-slate-600 transition-colors"
+                                                                                    >
+                                                                                        Annuler
+                                                                                    </button>
+                                                                                </div>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <>
+                                                                                <div className="flex items-start justify-between gap-3">
+                                                                                    <p className="text-slate-200 whitespace-pre-wrap font-light leading-relaxed flex-1">{msg.text}</p>
+                                                                                    <div className="message-actions flex gap-2">
+                                                                                        <button
+                                                                                            onClick={() => {
+                                                                                                setEditingMessageId(msg.id);
+                                                                                                setEditingText(msg.text);
+                                                                                            }}
+                                                                                            className="text-slate-500 hover:text-purple-400 transition-colors"
+                                                                                            title="Modifier"
+                                                                                        >
+                                                                                            <Edit className="w-4 h-4" strokeWidth={1.5} />
+                                                                                        </button>
+                                                                                        <button
+                                                                                            onClick={() => handleDeleteMessage(msg.id)}
+                                                                                            className="text-slate-500 hover:text-red-400 transition-colors"
+                                                                                            title="Supprimer"
+                                                                                        >
+                                                                                            <Trash className="w-4 h-4" strokeWidth={1.5} />
+                                                                                        </button>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div className="flex items-center justify-between text-xs text-slate-500 mt-3">
+                                                                                    <div className="flex items-center gap-3">
+                                                                                        <span className="font-light">{formatDate(msg.timestamp)}</span>
+                                                                                        {msg.edited && <span className="text-slate-600 italic">modifié</span>}
+                                                                                        {isUnread && <span className="bg-purple-500 text-white px-2 py-0.5 rounded-full text-xs">Nouveau</span>}
+                                                                                    </div>
+                                                                                    <button
+                                                                                        onClick={() => setReplyingTo(msg.id)}
+                                                                                        className="flex items-center gap-1 text-slate-400 hover:text-purple-400 transition-colors"
+                                                                                    >
+                                                                                        <Reply className="w-4 h-4" strokeWidth={1.5} />
+                                                                                        <span className="font-light">Répondre</span>
+                                                                                    </button>
+                                                                                </div>
+                                                                            </>
+                                                                        )}
+                                                                    </div>
+
+                                                                    {/* Réponses */}
+                                                                    {msg.replies && msg.replies.length > 0 && (
+                                                                        <div className="ml-8 space-y-2">
+                                                                            {msg.replies.map((reply) => {
+                                                                                const isReplyUnread = !readMessages.includes(reply.id);
+                                                                                
+                                                                                return (
+                                                                                    <div
+                                                                                        key={reply.id}
+                                                                                        className={`message-container bg-slate-900/50 rounded-lg p-4 border ${isReplyUnread ? 'border-purple-500/50' : 'border-slate-800/50'}`}
+                                                                                    >
+                                                                                        <div className="flex items-start justify-between gap-3">
+                                                                                            <p className="text-slate-300 text-sm font-light leading-relaxed flex-1">{reply.text}</p>
+                                                                                            <button
+                                                                                                onClick={() => handleDeleteReply(msg.id, reply.id)}
+                                                                                                className="message-actions text-slate-600 hover:text-red-400 transition-colors"
+                                                                                                title="Supprimer"
+                                                                                            >
+                                                                                                <Trash className="w-3 h-3" strokeWidth={1.5} />
+                                                                                            </button>
+                                                                                        </div>
+                                                                                        <div className="flex items-center gap-2 text-xs text-slate-600 mt-2">
+                                                                                            <span className="font-light">{formatDate(reply.timestamp)}</span>
+                                                                                            {isReplyUnread && <span className="bg-purple-500/70 text-white px-2 py-0.5 rounded-full text-xs">Nouveau</span>}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                );
+                                                                            })}
+                                                                        </div>
+                                                                    )}
+
+                                                                    {/* Formulaire de réponse */}
+                                                                    {replyingTo === msg.id && (
+                                                                        <div className="ml-8 bg-slate-900/50 rounded-lg p-4 border border-slate-800">
+                                                                            <textarea
+                                                                                value={replyText}
+                                                                                onChange={(e) => setReplyText(e.target.value)}
+                                                                                placeholder="Votre réponse..."
+                                                                                className="w-full h-24 px-3 py-2 bg-slate-950/50 border border-slate-800 rounded-lg focus:outline-none focus:border-purple-600 resize-none text-white text-sm font-light placeholder-slate-600"
+                                                                            />
+                                                                            <div className="flex gap-2 mt-3">
+                                                                                <button
+                                                                                    onClick={() => handleReply(msg.id)}
+                                                                                    disabled={!replyText.trim()}
+                                                                                    className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-light hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                                                >
+                                                                                    Envoyer
+                                                                                </button>
+                                                                                <button
+                                                                                    onClick={() => {
+                                                                                        setReplyingTo(null);
+                                                                                        setReplyText('');
+                                                                                    }}
+                                                                                    className="px-4 py-2 bg-slate-700 text-white rounded-lg text-sm font-light hover:bg-slate-600 transition-colors"
+                                                                                >
+                                                                                    Annuler
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </>
+                                    );
+                                })()}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<NotreEspace />);
+    </script>
+</body>
+</html>
