@@ -1,0 +1,338 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>En Fouple 💜</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Work+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+body{
+  margin:0;
+  font-family:'Work Sans',sans-serif;
+  background:linear-gradient(135deg,#0f0f14,#1a1a2e,#0f0f14);
+  overflow-x:hidden;
+}
+.cormorant{font-family:'Cormorant Garamond',serif}
+.glow{
+  position:absolute;
+  width:500px;
+  height:500px;
+  border-radius:50%;
+  filter:blur(120px);
+  opacity:.25;
+}
+</style>
+</head>
+
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+
+const {useState,useEffect}=React;
+
+/* 🔑 TES CLÉS */
+const SUPABASE_URL="https://TON-PROJET.supabase.co";
+const SUPABASE_KEY="TA-ANON-KEY";
+
+const {createClient}=supabase;
+const db=createClient(SUPABASE_URL,SUPABASE_KEY);
+
+/* CATÉGORIES */
+const CATS=[
+ {id:"memorables",name:"Mémorables",color:"from-purple-900 to-pink-900"},
+ {id:"questions",name:"Questions intimes",color:"from-violet-900 to-purple-900"},
+ {id:"chemin",name:"Notre chemin",color:"from-indigo-900 to-blue-900"},
+ {id:"projets",name:"Projets & Envies",color:"from-rose-900 to-orange-900"}
+];
+
+function App(){
+
+const [auth,setAuth]=useState(false);
+const [pwd,setPwd]=useState("");
+const [msgs,setMsgs]=useState([]);
+const [cat,setCat]=useState(null);
+const [text,setText]=useState("");
+const [reply,setReply]=useState({});
+const [showNew,setShowNew]=useState(false);
+
+const [devId]=useState(()=>{
+ let id=localStorage.getItem("ef-dev");
+ if(!id){
+  id="dev-"+crypto.randomUUID();
+  localStorage.setItem("ef-dev",id);
+ }
+ return id;
+});
+
+/* LOAD */
+const loadMsgs=async()=>{
+ const {data}=await db
+  .from("messages")
+  .select("*")
+  .order("timestamp",{ascending:false});
+ if(data) setMsgs(data);
+};
+
+/* REALTIME */
+useEffect(()=>{
+ loadMsgs();
+ const sub=db.channel("msgs")
+  .on("postgres_changes",
+   {event:"*",schema:"public",table:"messages"},
+   loadMsgs)
+  .subscribe();
+ return()=>sub.unsubscribe();
+},[]);
+
+/* LOGIN */
+const login=async()=>{
+ const {data}=await db
+  .from("config")
+  .select("*")
+  .eq("key","password")
+  .single();
+
+ if(!data){
+  await db.from("config")
+   .insert({key:"password",value:pwd});
+  setAuth(true);
+  return;
+ }
+
+ if(data.value===pwd) setAuth(true);
+ else alert("Mot de passe incorrect");
+};
+
+/* SEND */
+const send=async()=>{
+ if(!text.trim()||!cat) return;
+
+ await db.from("messages").insert({
+  category:cat,
+  text,
+  timestamp:Date.now(),
+  device_id:devId,
+  replies:[],
+  edited:false
+ });
+
+ setText("");
+ setShowNew(false);
+};
+
+/* DELETE */
+const del=async(id)=>{
+ await db.from("messages").delete().eq("id",id);
+};
+
+/* REPLY */
+const sendReply=async(m)=>{
+ if(!reply[m.id]) return;
+
+ const replies=[...(m.replies||[])];
+ replies.push({
+  id:Date.now(),
+  text:reply[m.id],
+  device_id:devId,
+  timestamp:Date.now()
+ });
+
+ await db.from("messages")
+  .update({replies})
+  .eq("id",m.id);
+
+ setReply({...reply,[m.id]:""});
+};
+
+/* LOGIN UI */
+if(!auth){
+ return(
+ <div className="min-h-screen flex items-center justify-center text-white relative">
+
+  <div className="glow bg-purple-600 top-[-100px] left-[-100px]"></div>
+  <div className="glow bg-pink-600 bottom-[-100px] right-[-100px]"></div>
+
+  <div className="bg-black/40 backdrop-blur-xl p-10 rounded-2xl shadow-2xl border border-white/10 text-center">
+
+   <h1 className="text-5xl cormorant mb-6">En Fouple</h1>
+
+   <input
+    type="password"
+    placeholder="Mot de passe partagé"
+    className="text-black p-3 rounded w-64"
+    value={pwd}
+    onChange={e=>setPwd(e.target.value)}
+   />
+
+   <br/>
+
+   <button
+    onClick={login}
+    className="mt-4 bg-purple-700 px-6 py-2 rounded-lg">
+    Entrer
+   </button>
+
+  </div>
+ </div>
+ );
+}
+
+/* HOME */
+if(!cat){
+ return(
+ <div className="min-h-screen text-white p-8 relative">
+
+  <div className="glow bg-purple-600 top-[-150px] left-[20%]"></div>
+  <div className="glow bg-pink-600 bottom-[-150px] right-[20%]"></div>
+
+  <h1 className="text-5xl cormorant mb-10">En Fouple 💜</h1>
+
+  <div className="grid md:grid-cols-2 gap-6">
+
+   {CATS.map(c=>
+    <div key={c.id}
+     onClick={()=>setCat(c.id)}
+     className={`p-6 rounded-2xl bg-gradient-to-br ${c.color} shadow-xl cursor-pointer hover:scale-105 transition`}>
+
+     <h2 className="text-2xl cormorant">{c.name}</h2>
+
+     <p className="opacity-70 mt-2">
+      {msgs.filter(m=>m.category===c.id).length} messages
+     </p>
+
+    </div>
+   )}
+
+  </div>
+
+  <button
+   onClick={()=>setShowNew(true)}
+   className="fixed bottom-8 right-8 bg-purple-700 px-6 py-3 rounded-full shadow-xl">
+   Nouveau
+  </button>
+
+ </div>
+ );
+}
+
+/* CATEGORY */
+return(
+<div className="min-h-screen text-white p-8">
+
+<button
+ onClick={()=>setCat(null)}
+ className="mb-6 opacity-70">
+ ← Retour
+</button>
+
+<h2 className="text-3xl cormorant mb-6">
+ {CATS.find(c=>c.id===cat).name}
+</h2>
+
+{msgs
+ .filter(m=>m.category===cat)
+ .map(m=>(
+
+<div key={m.id}
+ className="bg-white/5 p-4 rounded-xl mb-4 backdrop-blur">
+
+<div>{m.text}</div>
+
+<small className="opacity-60">
+ {new Date(m.timestamp).toLocaleString()}
+</small>
+
+<div className="mt-3">
+<button
+ onClick={()=>del(m.id)}
+ className="bg-red-600 px-2 py-1 rounded text-sm">
+ Supprimer
+</button>
+</div>
+
+{/* REPLIES */}
+<div className="ml-4 mt-3 space-y-2">
+ {(m.replies||[]).map(r=>
+  <div key={r.id}
+   className="bg-black/40 p-2 rounded">
+   {r.text}
+  </div>
+ )}
+</div>
+
+<textarea
+ className="text-black p-2 rounded w-full mt-3"
+ rows="2"
+ placeholder="Répondre…"
+ value={reply[m.id]||""}
+ onChange={e=>
+  setReply({...reply,[m.id]:e.target.value})
+ }
+/>
+
+<button
+ onClick={()=>sendReply(m)}
+ className="bg-indigo-600 px-3 py-1 rounded mt-2 text-sm">
+ Répondre
+</button>
+
+</div>
+
+))}
+
+/* MODALE NEW */
+{showNew&&(
+<div className="fixed inset-0 bg-black/70 flex items-center justify-center">
+
+<div className="bg-slate-900 p-6 rounded-xl w-96">
+
+<h3 className="text-xl mb-4">Nouveau message</h3>
+
+<select
+ className="text-black p-2 rounded w-full mb-3"
+ onChange={e=>setCat(e.target.value)}
+>
+ <option>Choisir rubrique</option>
+ {CATS.map(c=>
+  <option key={c.id} value={c.id}>{c.name}</option>
+ )}
+</select>
+
+<textarea
+ className="text-black p-2 rounded w-full mb-3"
+ rows="4"
+ value={text}
+ onChange={e=>setText(e.target.value)}
+/>
+
+<button
+ onClick={send}
+ className="bg-purple-700 px-4 py-2 rounded">
+ Envoyer
+</button>
+
+</div>
+</div>
+)}
+
+</div>
+);
+}
+
+ReactDOM
+.createRoot(document.getElementById("root"))
+.render(<App/>);
+
+</script>
+</body>
+</html>
