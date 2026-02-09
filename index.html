@@ -151,10 +151,10 @@
                     updateBadge(totalUnread);
                     
                     // 🔔 Notification push si nouveau message
-                    if (unread.length > 0 && notifs.length < unread.length) {
+                    if (unread.length > 0) {
                         const latestMsg = unread[0];
                         const catName = CATS.find(c => c.id === latestMsg.category)?.name || 'Messages';
-                        showPushNotification('💜 En Fouple', `Nouveau message dans "${catName}"`);
+                        showPushNotification('📧 En Fouple', 'Vous avez un nouveau message'); 
                     }
                 }
             };
